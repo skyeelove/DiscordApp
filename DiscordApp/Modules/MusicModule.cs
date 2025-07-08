@@ -13,10 +13,12 @@ using System.Threading.Tasks;
 
 namespace DiscordApp.Modules
 {
-    public class MusicModule(AudioStreamService audioService, MusicQueueService queue) : ModuleBase<SocketCommandContext>
+    public class MusicModule(AudioStreamService audioService, MusicQueueService queue, 
+        GuildAudioStateService stateService) : ModuleBase<SocketCommandContext>
     {
         private readonly MusicQueueService _queue = queue;
         private readonly AudioStreamService _audioService = audioService;
+        private readonly GuildAudioStateService _guildAudioStateService = stateService;
 
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
@@ -40,19 +42,30 @@ namespace DiscordApp.Modules
                 }
                 _queue.AddSong(Context.Guild.Id, await AudioStreamService.GetAudioDataAsync(link));
                 await ReplyAsync("Added to queue.");
-                return;
+                if (_guildAudioStateService.IsPlaying(Context.Guild.Id))
+                {
+                    return;
+                }
             }
 
-            var audioClient = await currentUserChannel.ConnectAsync();
+            if (_guildAudioStateService.GetClient(Context.Guild.Id) == null)
+            {
+                var audioClient = await currentUserChannel.ConnectAsync(selfDeaf: true);
+                _guildAudioStateService.SetClient(Context.Guild.Id, audioClient);
+            }
+
+
             _queue.AddSong(Context.Guild.Id, await AudioStreamService.GetAudioDataAsync(link));
             while (queue.TryGetNextSong(Context.Guild.Id, out var song))
             {
                 await ReplyAsync($"Now playing: {song.Value.Title}");
-                await _audioService.SendAsync(Context.Guild.Id, audioClient, song: song);
+                await _audioService.SendAsync(Context.Guild.Id, 
+                    _guildAudioStateService.GetClient(Context.Guild.Id), song: song);
             }
 
             if (_queue.GetQueue(Context.Guild.Id).Count == 0)
             {
+                _guildAudioStateService.RemoveClient(Context.Guild.Id);
                 await ReplyAsync("There are no more tracks");
                 await currentUserChannel.DisconnectAsync();
             }
@@ -68,9 +81,9 @@ namespace DiscordApp.Modules
 
             var fields = _queue.GetAllTitles(Context.Guild.Id);
 
-            foreach (var field in fields)
+            for(int i = 0; i < fields.Count; i++)
             {
-                embed.AddField(field, "\u200B", inline: false);
+                embed.WithDescription($". {fields[i]}");
             }
 
             await ReplyAsync(" ", false,
@@ -85,7 +98,12 @@ namespace DiscordApp.Modules
             VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
             if (currentBotsChannel == null)
             {
-                await ReplyAsync("I'm not in the voice room");
+                await ReplyAsync("", false, new EmbedBuilder()
+                    .WithColor(Color.DarkRed)
+                    .WithDescription("​I'm not in the voice room")
+                    .Build() 
+                    );
+
                 return;
             }
 
