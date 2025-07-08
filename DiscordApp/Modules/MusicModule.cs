@@ -34,19 +34,10 @@ namespace DiscordApp.Modules
                 return;
             }
 
-            if (currentBotsChannel != null)
+            if (currentBotsChannel.Id != currentUserChannel.Id)
             {
-                if (currentBotsChannel.Id != currentUserChannel.Id)
-                {
-                    await ReplyAsync($"Bot already in {currentBotsChannel.Name} you can try to use !stop");
-                    return;
-                }
-                _queue.AddSong(guildId, await AudioStreamService.GetAudioDataAsync(link));
-                await ReplyAsync("Added to queue.");
-                if (_voiceState.IsPlaying(guildId))
-                {
-                    return;
-                }
+                await ReplyAsync($"Bot already in {currentBotsChannel.Name} you can try to use !stop");
+                return;
             }
 
             if (_voiceState.GetClient(guildId) == null)
@@ -57,9 +48,19 @@ namespace DiscordApp.Modules
 
 
             _queue.AddSong(guildId, await AudioStreamService.GetAudioDataAsync(link));
+            if (_voiceState.IsPlaying(guildId))
+            {            
+                await ReplyAsync("Added to queue.");
+                return;
+            }
+
             while (queue.TryGetNextSong(guildId, out var song))
             {
-                await ReplyAsync($"Now playing: {song.Value.Title}");
+                await ReplyAsync("", false, new EmbedBuilder()
+                    .WithColor(Color.DarkOrange)
+                    .WithDescription($"Now playing: {song.Value.Title}")
+                    .Build()
+                    );
                 await _audioService.SendAsync(guildId,
                     _voiceState.GetClient(Context.Guild.Id), song: song);
             }
