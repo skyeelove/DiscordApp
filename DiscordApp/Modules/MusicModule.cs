@@ -33,10 +33,13 @@ namespace DiscordApp.Modules
                 return;
             }
 
-            if (currentBotsChannel.Id != currentUserChannel.Id)
+            if (currentBotsChannel != null)
             {
-                await ReplyAsync($"Bot already in {currentBotsChannel.Name} you can try to use !stop");
-                return;
+                if (currentBotsChannel.Id != currentUserChannel.Id)
+                {
+                    await ReplyAsync($"Bot already in {currentBotsChannel.Name} you can try to use !stop");
+                    return;
+                }
             }
 
             if (_voiceState.GetClient(guildId) == null)
