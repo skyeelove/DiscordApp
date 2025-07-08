@@ -45,7 +45,6 @@ namespace DiscordApp.Modules
                 _voiceState.SetClient(guildId, audioClient);
             }
 
-
             _queue.AddSong(guildId, await AudioStreamService.GetAudioDataAsync(link));
             if (_voiceState.IsPlaying(guildId))
             {            
