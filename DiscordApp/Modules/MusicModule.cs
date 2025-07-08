@@ -41,7 +41,7 @@ namespace DiscordApp.Modules
         [Command("play", RunMode = RunMode.Async)]
         public async Task PlayMusic(string link)
         {
-            VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel);
+            VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
 
             if (currentUserChannel == null)
             {
@@ -63,8 +63,12 @@ namespace DiscordApp.Modules
 
             var audioClient = await currentUserChannel.ConnectAsync();
             _queue.AddSong(Context.Guild.Id, await AudioStreamService.GetAudioDataAsync(link));
-            await _audioService.SendAsync(Context.Guild.Id, audioClient, queue: _queue);
-            
+            while (queue.TryGetNextSong(Context.Guild.Id, out var song))
+            {
+                await ReplyAsync($"Now playing: {song.Value.Title}");
+                await _audioService.SendAsync(Context.Guild.Id, audioClient, song: song);
+            }
+
             if (_queue.GetQueue(Context.Guild.Id).Count == 0)
             {
                 await ReplyAsync("There are no more tracks");
@@ -95,7 +99,7 @@ namespace DiscordApp.Modules
         [Command("stop", RunMode = RunMode.Async)]
         public async Task StopMusic(IVoiceChannel? channel = null)
         {
-            VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel);
+            VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
             if (currentBotsChannel == null)
             {
                 await ReplyAsync("I'm not in the voice room");
@@ -107,13 +111,14 @@ namespace DiscordApp.Modules
                 await ReplyAsync($"You should be in the same room as bot");
                 return;
             }
+
             _queue.GetQueue(Context.Guild.Id).Clear();
             _audioService.KillFfmpeg();
             await ReplyAsync("Bye bye..");
             await currentBotsChannel.DisconnectAsync();
         }
 
-        private void VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel)
+        private void VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel)
         {
             var botUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
             currentBotsChannel = botUser.VoiceChannel;
