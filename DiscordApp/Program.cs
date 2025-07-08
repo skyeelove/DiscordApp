@@ -25,7 +25,7 @@ class Program
         var handler = services.GetRequiredService<CommandHandler>();
         await handler.InstallCommandsAsync();
 
-        var token = File.ReadAllText(path: $"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent}\\token.txt");
+        var token = Environment.GetEnvironmentVariable("token");
         await _client.LoginAsync(TokenType.Bot, token);
         await _client.StartAsync();
 

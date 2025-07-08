@@ -37,7 +37,6 @@ namespace DiscordApp.Modules
                 );
         }
 
-
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
         public async Task PlayMusic(string link)
@@ -84,7 +83,7 @@ namespace DiscordApp.Modules
 
             foreach (var field in fields)
             {
-                embed.AddField("Kys", field ,inline: false);
+                embed.AddField(field, "\u200B", inline: false);
             }
 
             await ReplyAsync(" ", false,

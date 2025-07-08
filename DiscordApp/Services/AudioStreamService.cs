@@ -50,7 +50,6 @@ namespace DiscordApp.Services
             return new Song(title, url);
         }
 
-
         private Process CreateStream(Song? song)
         {
             if (song == null)
