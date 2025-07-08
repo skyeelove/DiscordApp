@@ -19,7 +19,7 @@ namespace DiscordApp.Services
             var psi = new ProcessStartInfo
             {
                 FileName = "yt-dlp",
-                Arguments = $"-f bestaudio --get-title -g \"{queryOrUrl}\"",
+                Arguments = $"--yes-playlist -f bestaudio --get-title -g \"{queryOrUrl}\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true

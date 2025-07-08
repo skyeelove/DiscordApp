@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Discord.Audio;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace DiscordApp.Services
 
     public class MusicQueueService
     {
-        private readonly ConcurrentDictionary<ulong, Queue<Song>> _queues = new();    
+        private readonly ConcurrentDictionary<ulong, Queue<Song>> _queues = new();
 
         public void AddSong(ulong guildId, Song song)
         {
