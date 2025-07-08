@@ -20,6 +20,7 @@ namespace DiscordApp.Modules
 
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
+        [Summary("Play track/Add track to queue")]
         public async Task PlayMusic(string link)
         {
             VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel);
@@ -54,6 +55,7 @@ namespace DiscordApp.Modules
         }
 
         [Command("queue")]
+        [Summary("Display queue using embed")]
         public async Task DisplayQueue()
         {
             var embed = new EmbedBuilder()
