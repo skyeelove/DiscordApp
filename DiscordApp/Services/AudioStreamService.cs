@@ -81,7 +81,6 @@ namespace DiscordApp.Services
             return process;
         }
 
-
         public void KillFfmpeg()
         {
             if (ffmpeg == null)
@@ -119,35 +118,34 @@ namespace DiscordApp.Services
             }
         }
 
-        public async Task SendAsync(ulong guildId, IAudioClient client, MusicQueueService queue)
+        public async Task SendAsync(ulong guildId, IAudioClient client, Song? song)
         {
-            while (queue.TryGetNextSong(guildId, out var song))
+            ffmpeg = CreateStream(song);
+            using var output = ffmpeg.StandardOutput.BaseStream;
+            using var discord = client.CreatePCMStream(AudioApplication.Mixed);
+            try
             {
-                ffmpeg = CreateStream(song);
-                using var output = ffmpeg.StandardOutput.BaseStream;
-                using var discord = client.CreatePCMStream(AudioApplication.Mixed);
+                await output.CopyToAsync(discord);
+            }
+            catch
+            {
+                Console.WriteLine("[ERROR]Copying stream to discord was cancelled");
+                return;
+            }
+            finally
+            {
                 try
                 {
-                    await output.CopyToAsync(discord);
+                    await discord.FlushAsync();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    Console.WriteLine("[ERROR]Copy to discord was cancelled");
-                    break;
-                }
-                finally
-                {
-                    try
-                    {
-                        await discord.FlushAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[WARNING]Error by FlushAsync: {ex.Message}");
-                    }
+                    Console.WriteLine($"[WARNING]Error by FlushAsync: {ex.Message}");
                 }
             }
+           
             
         }
+
     }
 }
