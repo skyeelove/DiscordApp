@@ -8,15 +8,10 @@ using System.Threading.Tasks;
 
 namespace DiscordApp.Services
 {
-    public struct Song
+    public struct Song(string title, string link)
     {
-        public string Title { get; set; }
-        public string Link { get; set; }
-
-        public Song(string title, string link)
-        {
-            Title = title; Link = link;
-        }
+        public string Title { get; set; } = title; 
+        public string Link { get; set; } = link;
     }
 
     public class MusicQueueService
@@ -56,6 +51,7 @@ namespace DiscordApp.Services
             song = null;
             return false;
         }
+
         public List<string> GetAllTitles(ulong guildId)
         {
             var result = new List<string>();
