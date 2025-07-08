@@ -57,17 +57,18 @@ namespace DiscordApp.Modules
                     await ReplyAsync($"Bot already in {currentBotsChannel.Name} you can try to use !stop");
                     return;
                 }
-                _queue.AddSong(Context.Guild.Id, new Song("idk how to catch name", link));
+                _queue.AddSong(Context.Guild.Id, await AudioStreamService.GetAudioDataAsync(link));
                 await ReplyAsync("Added to queue.");
                 return;
             }
 
-            _queue.AddSong(Context.Guild.Id, new Song("idk how to catch name", link));
             var audioClient = await currentUserChannel.ConnectAsync();
+            _queue.AddSong(Context.Guild.Id, await AudioStreamService.GetAudioDataAsync(link));
             await _audioService.SendAsync(Context.Guild.Id, audioClient, queue: _queue);
             
             if (_queue.GetQueue(Context.Guild.Id).Count == 0)
             {
+                await ReplyAsync("There are no more tracks");
                 await currentUserChannel.DisconnectAsync();
             }
         }
@@ -83,7 +84,7 @@ namespace DiscordApp.Modules
 
             foreach (var field in fields)
             {
-                embed.AddField(" ", field ,inline: false);
+                embed.AddField("Kys", field ,inline: false);
             }
 
             await ReplyAsync(" ", false,
@@ -96,9 +97,7 @@ namespace DiscordApp.Modules
         public async Task StopMusic(IVoiceChannel? channel = null)
         {
             VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel);
-
-            channel ??= Context.Guild.GetUser(Context.Client.CurrentUser.Id).VoiceChannel;
-            if (channel == null)
+            if (currentBotsChannel == null)
             {
                 await ReplyAsync("I'm not in the voice room");
                 return;
@@ -109,10 +108,10 @@ namespace DiscordApp.Modules
                 await ReplyAsync($"You should be in the same room as bot");
                 return;
             }
-            _queue.GetQueue(Context.Guild.Id);
+            _queue.GetQueue(Context.Guild.Id).Clear();
             _audioService.KillFfmpeg();
             await ReplyAsync("Bye bye..");
-            await channel.DisconnectAsync();
+            await currentBotsChannel.DisconnectAsync();
         }
 
         private void VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel)

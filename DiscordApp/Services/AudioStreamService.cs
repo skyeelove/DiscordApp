@@ -14,31 +14,53 @@ namespace DiscordApp.Services
     {
         private Process? ffmpeg;
 
-    public static string GetAudioUrl(string queryOrUrl)
+        public static async Task<Song> GetAudioDataAsync(string queryOrUrl)
         {
             var psi = new ProcessStartInfo
             {
                 FileName = "yt-dlp",
-                Arguments = $"-f bestaudio -g \"{queryOrUrl}\"",
+                Arguments = $"-f bestaudio --get-title -g \"{queryOrUrl}\"",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
-            using var process = Process.Start(psi);
-            string url = process.StandardOutput.ReadLine();
-            process.WaitForExit();
-            return url;
+            using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            var output = new List<string>();
+
+            var tcs = new TaskCompletionSource<bool>();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data == null)
+                    tcs.TrySetResult(true);
+                else
+                    output.Add(e.Data);
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+
+            await tcs.Task;
+            await process.WaitForExitAsync();
+
+            string title = output.Count > 0 ? output[0] : "Unknown title";
+            string url = output.Count > 1 ? output[1] : "";
+
+            return new Song(title, url);
         }
 
-        private Process CreateStream(string path)
-        {
-            string url = GetAudioUrl(path);
 
+        private Process CreateStream(Song? song)
+        {
+            if (song == null)
+            {
+                return null;
+            }
             var psi = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-hide_banner -loglevel info -nostdin -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i \"{url}\" -ac 2 -f s16le -ar 48000 pipe:1",
+                Arguments = $"-hide_banner -loglevel info -nostdin -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i \"{song.Value.Link}\" -ac 2 -f s16le -ar 48000 pipe:1",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -102,7 +124,7 @@ namespace DiscordApp.Services
         {
             while (queue.TryGetNextSong(guildId, out var song))
             {
-                ffmpeg = CreateStream(song.Value.Link);
+                ffmpeg = CreateStream(song);
                 using var output = ffmpeg.StandardOutput.BaseStream;
                 using var discord = client.CreatePCMStream(AudioApplication.Mixed);
                 try
@@ -111,6 +133,7 @@ namespace DiscordApp.Services
                 }
                 catch
                 {
+                    Console.WriteLine("[ERROR]Copy to discord was cancelled");
                     break;
                 }
                 finally
