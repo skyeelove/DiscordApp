@@ -13,29 +13,10 @@ using System.Threading.Tasks;
 
 namespace DiscordApp.Modules
 {
-    public class MusicModule(DiscordSocketClient client, AudioStreamService audioService, MusicQueueService queue) : ModuleBase<SocketCommandContext>
+    public class MusicModule(AudioStreamService audioService, MusicQueueService queue) : ModuleBase<SocketCommandContext>
     {
-        private readonly DiscordSocketClient _client = client;
         private readonly MusicQueueService _queue = queue;
         private readonly AudioStreamService _audioService = audioService;
-
-
-        [Command("embed")]
-        [Summary("Here will be list of found songs")]
-        public async Task DisplayEmbed()
-        {
-            await ReplyAsync("", false,
-                new EmbedBuilder()
-                    .WithDescription("Results:")
-                    .WithAuthor(_client.CurrentUser)
-                    .WithTimestamp(DateTimeOffset.Now)
-                    .AddField("Field 1", "Value 1")
-                    .AddField("Field 2", "Value 2")
-                    .AddField("Field 3", "Value 3")
-                    .WithColor(Color.DarkBlue)
-                    .Build()
-                );
-        }
 
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
