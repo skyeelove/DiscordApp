@@ -108,7 +108,6 @@ namespace DiscordApp.Services
                 try
                 {
                     await output.CopyToAsync(discord);
-
                 }
                 finally
                 {

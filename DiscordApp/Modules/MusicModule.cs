@@ -72,6 +72,26 @@ namespace DiscordApp.Modules
             }
         }
 
+        [Command("queue")]
+        public async Task DisplayQueue()
+        {
+            var embed = new EmbedBuilder()
+                .WithDescription("Results:")
+                .WithAuthor(_client.CurrentUser)
+                .WithTimestamp(DateTimeOffset.Now)
+                .WithColor(Color.DarkBlue);
+
+            var fields = _queue.GetAllTitles(Context.Guild.Id);
+
+            foreach (var field in fields)
+            {
+                embed.AddField("Title", field ,inline: false);
+            }
+
+            await ReplyAsync(" ", false,
+                embed.Build()
+            );
+        }
 
 
         [Command("stop", RunMode = RunMode.Async)]

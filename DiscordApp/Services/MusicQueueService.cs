@@ -56,8 +56,21 @@ namespace DiscordApp.Services
             song = null;
             return false;
         }
-
-        public Song GetNext(ulong guildId) => _queues[guildId].Dequeue();
+        public List<string> GetAllTitles(ulong guildId)
+        {
+            var result = new List<string>();
+            if (_queues.TryGetValue(guildId, out Queue<Song>? value))
+            {
+                foreach (var item in value)
+                {
+                    result.Add(item.Title);
+                }
+                if (result.Count > 0)
+                {
+                    return result;
+                }
+            }
+            return ["No Elements in queue"];
+        }
     }
-
 }
