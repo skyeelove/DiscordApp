@@ -27,7 +27,6 @@ namespace DiscordApp.Modules
         {
             VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
             var guildId = Context.Guild.Id; 
-
             if (currentUserChannel == null)
             {
                 await ReplyAsync("You must be in a voice channel.");
