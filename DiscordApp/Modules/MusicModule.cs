@@ -14,11 +14,11 @@ using System.Threading.Tasks;
 namespace DiscordApp.Modules
 {
     public class MusicModule(AudioStreamService audioService, MusicQueueService queue, 
-        GuildAudioStateService stateService) : ModuleBase<SocketCommandContext>
+        VoiceStateService stateService) : ModuleBase<SocketCommandContext>
     {
         private readonly MusicQueueService _queue = queue;
         private readonly AudioStreamService _audioService = audioService;
-        private readonly GuildAudioStateService _guildAudioStateService = stateService;
+        private readonly VoiceStateService _voiceState = stateService;
 
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
@@ -26,6 +26,7 @@ namespace DiscordApp.Modules
         public async Task PlayMusic(string link)
         {
             VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
+            var guildId = Context.Guild.Id; 
 
             if (currentUserChannel == null)
             {
@@ -40,32 +41,32 @@ namespace DiscordApp.Modules
                     await ReplyAsync($"Bot already in {currentBotsChannel.Name} you can try to use !stop");
                     return;
                 }
-                _queue.AddSong(Context.Guild.Id, await AudioStreamService.GetAudioDataAsync(link));
+                _queue.AddSong(guildId, await AudioStreamService.GetAudioDataAsync(link));
                 await ReplyAsync("Added to queue.");
-                if (_guildAudioStateService.IsPlaying(Context.Guild.Id))
+                if (_voiceState.IsPlaying(guildId))
                 {
                     return;
                 }
             }
 
-            if (_guildAudioStateService.GetClient(Context.Guild.Id) == null)
+            if (_voiceState.GetClient(guildId) == null)
             {
                 var audioClient = await currentUserChannel.ConnectAsync(selfDeaf: true);
-                _guildAudioStateService.SetClient(Context.Guild.Id, audioClient);
+                _voiceState.SetClient(guildId, audioClient);
             }
 
 
-            _queue.AddSong(Context.Guild.Id, await AudioStreamService.GetAudioDataAsync(link));
-            while (queue.TryGetNextSong(Context.Guild.Id, out var song))
+            _queue.AddSong(guildId, await AudioStreamService.GetAudioDataAsync(link));
+            while (queue.TryGetNextSong(guildId, out var song))
             {
                 await ReplyAsync($"Now playing: {song.Value.Title}");
-                await _audioService.SendAsync(Context.Guild.Id, 
-                    _guildAudioStateService.GetClient(Context.Guild.Id), song: song);
+                await _audioService.SendAsync(guildId,
+                    _voiceState.GetClient(Context.Guild.Id), song: song);
             }
 
-            if (_queue.GetQueue(Context.Guild.Id).Count == 0)
+            if (_queue.GetQueue(guildId).Count == 0)
             {
-                _guildAudioStateService.RemoveClient(Context.Guild.Id);
+                _voiceState.RemoveClient(guildId);
                 await ReplyAsync("There are no more tracks");
                 await currentUserChannel.DisconnectAsync();
             }

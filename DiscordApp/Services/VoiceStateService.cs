@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DiscordApp.Services
 {
-    public class GuildAudioStateService
+    public class VoiceStateService
     {
         private readonly ConcurrentDictionary<ulong, IAudioClient> _connectedClients = new();
         private readonly ConcurrentDictionary<ulong, bool> _isPlaying = new();

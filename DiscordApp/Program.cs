@@ -20,7 +20,7 @@ class Program
             .AddSingleton<CommandService>()
             .AddSingleton<AudioStreamService>()
             .AddSingleton<MusicQueueService>()
-            .AddSingleton <GuildAudioStateService>()
+            .AddSingleton <VoiceStateService>()
             .BuildServiceProvider();
         
         var handler = services.GetRequiredService<CommandHandler>();
