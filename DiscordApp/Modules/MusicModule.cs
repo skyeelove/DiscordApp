@@ -41,10 +41,8 @@ namespace DiscordApp.Modules
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
         public async Task PlayMusic(string link)
-        {            
-            var botUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
-            var currentBotsChannel = botUser?.VoiceChannel;
-            var currentUserChannel = (Context.User as IGuildUser)?.VoiceChannel;
+        {
+            VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel);
 
             if (currentUserChannel == null)
             {
@@ -63,9 +61,11 @@ namespace DiscordApp.Modules
                 await ReplyAsync("Added to queue.");
                 return;
             }
+
             _queue.AddSong(Context.Guild.Id, new Song("idk how to catch name", link));
             var audioClient = await currentUserChannel.ConnectAsync();
             await _audioService.SendAsync(Context.Guild.Id, audioClient, queue: _queue);
+            
             if (_queue.GetQueue(Context.Guild.Id).Count == 0)
             {
                 await currentUserChannel.DisconnectAsync();
@@ -76,8 +76,6 @@ namespace DiscordApp.Modules
         public async Task DisplayQueue()
         {
             var embed = new EmbedBuilder()
-                .WithDescription("Results:")
-                .WithAuthor(_client.CurrentUser)
                 .WithTimestamp(DateTimeOffset.Now)
                 .WithColor(Color.DarkBlue);
 
@@ -85,7 +83,7 @@ namespace DiscordApp.Modules
 
             foreach (var field in fields)
             {
-                embed.AddField("Title", field ,inline: false);
+                embed.AddField(" ", field ,inline: false);
             }
 
             await ReplyAsync(" ", false,
@@ -97,15 +95,31 @@ namespace DiscordApp.Modules
         [Command("stop", RunMode = RunMode.Async)]
         public async Task StopMusic(IVoiceChannel? channel = null)
         {
+            VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel);
+
             channel ??= Context.Guild.GetUser(Context.Client.CurrentUser.Id).VoiceChannel;
             if (channel == null)
             {
                 await ReplyAsync("I'm not in the voice room");
                 return;
             }
+
+            if (currentBotsChannel.Id != currentUserChannel.Id)
+            {
+                await ReplyAsync($"You should be in the same room as bot");
+                return;
+            }
+            _queue.GetQueue(Context.Guild.Id);
             _audioService.KillFfmpeg();
             await ReplyAsync("Bye bye..");
             await channel.DisconnectAsync();
+        }
+
+        private void VoiceContext(out SocketVoiceChannel currentBotsChannel, out IVoiceChannel? currentUserChannel)
+        {
+            var botUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
+            currentBotsChannel = botUser.VoiceChannel;
+            currentUserChannel = (Context.User as IGuildUser)?.VoiceChannel;
         }
     }
 }

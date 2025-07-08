@@ -109,6 +109,10 @@ namespace DiscordApp.Services
                 {
                     await output.CopyToAsync(discord);
                 }
+                catch
+                {
+                    break;
+                }
                 finally
                 {
                     try
