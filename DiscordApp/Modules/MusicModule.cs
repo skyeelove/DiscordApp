@@ -20,6 +20,13 @@ namespace DiscordApp.Modules
         private readonly AudioStreamService _audioService = audioService;
         private readonly VoiceStateService _voiceState = stateService;
 
+        private void VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel)
+        {
+            var botUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
+            currentBotsChannel = botUser.VoiceChannel;
+            currentUserChannel = (Context.User as IGuildUser)?.VoiceChannel;
+        }
+
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
         [Summary("Play track/Add track to queue")]
@@ -84,19 +91,17 @@ namespace DiscordApp.Modules
         [Summary("Display queue using embed")]
         public async Task DisplayQueue()
         {
-            var embed = new EmbedBuilder()
-                .WithTimestamp(DateTimeOffset.Now)
-                .WithColor(Color.DarkBlue);
-
+            var embed = new EmbedBuilder();
             var fields = _queue.GetAllTitles(Context.Guild.Id);
-
-            foreach (string field in fields)
+            for(int i = 0; i < fields.Count; i++)
             {
-                embed.AddField("ㅤ", field, false);
+                embed.AddField($"{i+1}. {fields[i]}", "ㅤ", false);
             }
 
             await ReplyAsync("ㅤ", false,
-                embed.Build()
+                embed
+                .WithColor(Color.DarkBlue)
+                .Build()
             );
         }
 
@@ -128,11 +133,6 @@ namespace DiscordApp.Modules
             await currentBotsChannel.DisconnectAsync();
         }
 
-        private void VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel)
-        {
-            var botUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
-            currentBotsChannel = botUser.VoiceChannel;
-            currentUserChannel = (Context.User as IGuildUser)?.VoiceChannel;
-        }
+        [Command("stop", RunMode = RunMode.Async)]
     }
 }
