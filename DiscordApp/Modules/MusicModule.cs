@@ -57,17 +57,23 @@ namespace DiscordApp.Modules
 
             while (queue.TryGetNextSong(guildId, out var song))
             {
+                _voiceState.SetPlaying(guildId, true);
                 await ReplyAsync("", false, new EmbedBuilder()
                     .WithColor(Color.DarkOrange)
                     .WithDescription($"Now playing: {song.Value.Title}")
                     .Build()
                     );
-                await _audioService.SendAsync(guildId,
-                    _voiceState.GetClient(Context.Guild.Id), song: song);
+                await _audioService.SendAsync(
+                    guildId: guildId,
+                    client: _voiceState.GetClient(Context.Guild.Id), 
+                    song: song
+                    );
+                _queue.RemoveCurrent(guildId);
             }
 
             if (_queue.GetQueue(guildId).Count == 0)
             {
+                _voiceState.SetPlaying(guildId, false);
                 _voiceState.RemoveClient(guildId);
                 await ReplyAsync("There are no more tracks");
                 await currentUserChannel.DisconnectAsync();
@@ -84,12 +90,12 @@ namespace DiscordApp.Modules
 
             var fields = _queue.GetAllTitles(Context.Guild.Id);
 
-            for(int i = 0; i < fields.Count; i++)
+            foreach (string field in fields)
             {
-                embed.WithDescription($". {fields[i]}");
+                embed.AddField("ㅤ", field, false);
             }
 
-            await ReplyAsync(" ", false,
+            await ReplyAsync("ㅤ", false,
                 embed.Build()
             );
         }
