@@ -12,9 +12,22 @@ namespace DiscordApp.Services
     {
         private readonly ConcurrentDictionary<ulong, IAudioClient> _connectedClients = new();
         private readonly ConcurrentDictionary<ulong, bool> _isPlaying = new();
+        private readonly ConcurrentDictionary<ulong, bool> _wasSkipped = new();
 
-        public bool IsPlaying(ulong guildId) =>
-                    _isPlaying.TryGetValue(guildId, out var val) && val;
+        public bool GetSkippedState(ulong id)
+        {
+            return _wasSkipped.ContainsKey(id);
+        }
+
+        public void SetSkippedState(ulong guildId, bool value)
+        {
+            _wasSkipped[guildId] = value;
+        }
+
+        public bool IsPlaying(ulong guildId)
+        {
+            return _isPlaying.TryGetValue(guildId, out bool val) && val;
+        }
 
         public void SetPlaying(ulong guildId, bool value)
         {

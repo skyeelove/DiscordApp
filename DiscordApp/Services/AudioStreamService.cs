@@ -130,7 +130,7 @@ namespace DiscordApp.Services
             catch
             {
                 Console.WriteLine("[ERROR]Copying stream to discord was cancelled");
-                return;
+                //return;
             }
             finally
             {
