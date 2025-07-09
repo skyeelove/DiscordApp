@@ -15,20 +15,21 @@ namespace DiscordApp.Services
             string Arguments = string.Empty;
             if (IsValidUrl(queryOrUrl) == false)
             {
-                Arguments = $"--yes-playlist -f bestaudio --get-title --get-url ytsearch1:\"{queryOrUrl}\"";
+                Arguments = $"--encoding utf-8 --yes-playlist -f bestaudio --get-title --get-url ytsearch1:\"{queryOrUrl}\"";
             }
             else
             {
-                Arguments = $"--yes-playlist -f bestaudio --get-title -g \"{queryOrUrl}\"";
+                Arguments = $"--encoding utf-8 --yes-playlist -f bestaudio --get-title -g \"{queryOrUrl}\"";
             }
             var psi = new ProcessStartInfo
-                {
-                    FileName = "yt-dlp",
-                    Arguments = Arguments,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+            {
+                FileName = "yt-dlp",
+                Arguments = Arguments,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                StandardOutputEncoding = Encoding.UTF8,
+                CreateNoWindow = true
+            };
 
             using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
             var output = new List<string>();
