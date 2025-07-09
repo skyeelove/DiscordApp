@@ -14,42 +14,6 @@ namespace DiscordApp.Services
     {
         private Process? ffmpeg;
 
-        public static async Task<Song> GetAudioDataAsync(string queryOrUrl)
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = "yt-dlp",
-                Arguments = $"--yes-playlist -f bestaudio --get-title -g \"{queryOrUrl}\"",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-            var output = new List<string>();
-
-            var tcs = new TaskCompletionSource<bool>();
-
-            process.OutputDataReceived += (sender, e) =>
-            {
-                if (e.Data == null)
-                    tcs.TrySetResult(true);
-                else
-                    output.Add(e.Data);
-            };
-
-            process.Start();
-            process.BeginOutputReadLine();
-
-            await tcs.Task;
-            await process.WaitForExitAsync();
-
-            string title = output.Count > 0 ? output[0] : "Unknown title";
-            string url = output.Count > 1 ? output[1] : "";
-
-            return new Song(title, url);
-        }
-
         private Process CreateStream(Song? song)
         {
             if (song == null)
@@ -143,9 +107,6 @@ namespace DiscordApp.Services
                     Console.WriteLine($"[WARNING]Error by FlushAsync: {ex.Message}");
                 }
             }
-           
-            
         }
-
     }
 }

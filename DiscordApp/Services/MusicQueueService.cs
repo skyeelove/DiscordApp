@@ -24,12 +24,16 @@ namespace DiscordApp.Services
             _queues[guildId].Dequeue();
         }
 
-        public void AddSong(ulong guildId, Song song)
+        public void AddSong(ulong guildId, Song? song)
         {
+            if(song == null)
+            {
+                return;
+            }
             if (!_queues.ContainsKey(guildId))
                 _queues[guildId] = new Queue<Song>();
 
-            _queues[guildId].Enqueue(song);
+            _queues[guildId].Enqueue(song.Value);
             Console.WriteLine($"Size: {_queues[guildId].Count}");
         }
 
