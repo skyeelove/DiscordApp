@@ -21,6 +21,7 @@ class Program
             .AddSingleton<AudioStreamService>()
             .AddSingleton<MusicQueueService>()
             .AddSingleton <VoiceStateService>()
+            .AddSingleton<MusicPlayerService>()
             .BuildServiceProvider();
         
         var handler = services.GetRequiredService<CommandHandler>();
