@@ -19,6 +19,11 @@ namespace DiscordApp.Services
     {
         private readonly ConcurrentDictionary<ulong, Queue<Song>> _queues = new();
 
+        public void RemoveCurrent(ulong guildId)
+        {
+            _queues[guildId].Dequeue();
+        }
+
         public void AddSong(ulong guildId, Song song)
         {
             if (!_queues.ContainsKey(guildId))
@@ -45,7 +50,7 @@ namespace DiscordApp.Services
         {
             if (_queues.TryGetValue(guildId, out var queue) && queue.Count > 0)
             {
-                song = queue.Dequeue();
+                song = queue.Peek();
                 return true;
             }
 

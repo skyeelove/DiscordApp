@@ -20,6 +20,13 @@ namespace DiscordApp.Modules
         private readonly AudioStreamService _audioService = audioService;
         private readonly VoiceStateService _voiceState = stateService;
 
+        private void VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel)
+        {
+            var botUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
+            currentBotsChannel = botUser.VoiceChannel;
+            currentUserChannel = (Context.User as IGuildUser)?.VoiceChannel;
+        }
+
         // The command's Run Mode MUST be set to RunMode.Async, otherwise, being connected to a voice channel will block the gateway thread.
         [Command("play", RunMode = RunMode.Async)]
         [Summary("Play track/Add track to queue")]
@@ -57,17 +64,34 @@ namespace DiscordApp.Modules
 
             while (queue.TryGetNextSong(guildId, out var song))
             {
+                _voiceState.SetPlaying(guildId, true);
+
                 await ReplyAsync("", false, new EmbedBuilder()
                     .WithColor(Color.DarkOrange)
                     .WithDescription($"Now playing: {song.Value.Title}")
                     .Build()
                     );
-                await _audioService.SendAsync(guildId,
-                    _voiceState.GetClient(Context.Guild.Id), song: song);
+
+                await _audioService.SendAsync(
+                    guildId: guildId,
+                    client: _voiceState.GetClient(Context.Guild.Id), 
+                    song: song
+                    );
+
+                if (_voiceState.GetSkippedState(guildId) == true)
+                {
+                    _voiceState.SetSkippedState(Context.Guild.Id, false);
+                }
+                else
+                {
+                    _queue.RemoveCurrent(guildId);
+                }
+
             }
 
             if (_queue.GetQueue(guildId).Count == 0)
             {
+                _voiceState.SetPlaying(guildId, false);
                 _voiceState.RemoveClient(guildId);
                 await ReplyAsync("There are no more tracks");
                 await currentUserChannel.DisconnectAsync();
@@ -78,19 +102,17 @@ namespace DiscordApp.Modules
         [Summary("Display queue using embed")]
         public async Task DisplayQueue()
         {
-            var embed = new EmbedBuilder()
-                .WithTimestamp(DateTimeOffset.Now)
-                .WithColor(Color.DarkBlue);
-
+            var embed = new EmbedBuilder();
             var fields = _queue.GetAllTitles(Context.Guild.Id);
-
             for(int i = 0; i < fields.Count; i++)
             {
-                embed.WithDescription($". {fields[i]}");
+                embed.AddField($"{i+1}. {fields[i]}", "ㅤ", false);
             }
 
-            await ReplyAsync(" ", false,
-                embed.Build()
+            await ReplyAsync("ㅤ", false,
+                embed
+                .WithColor(Color.DarkBlue)
+                .Build()
             );
         }
 
@@ -122,11 +144,13 @@ namespace DiscordApp.Modules
             await currentBotsChannel.DisconnectAsync();
         }
 
-        private void VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel)
+        [Command("skip", RunMode = RunMode.Async)]
+        public async Task SkipMusic()
         {
-            var botUser = Context.Guild.GetUser(Context.Client.CurrentUser.Id);
-            currentBotsChannel = botUser.VoiceChannel;
-            currentUserChannel = (Context.User as IGuildUser)?.VoiceChannel;
+            _queue.RemoveCurrent(Context.Guild.Id);
+            _voiceState.SetSkippedState(Context.Guild.Id, true);
+            _audioService.KillFfmpeg();
+            await ReplyAsync("Was skipped");
         }
     }
 }
