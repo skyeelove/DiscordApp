@@ -13,11 +13,10 @@ using System.Threading.Tasks;
 
 namespace DiscordApp.Modules
 {
-    public class MusicModule(AudioStreamService audioService, MusicQueueService queue, 
-        VoiceStateService stateService, MusicPlayerService musicPlayer, FfmpegProcessManager processManager) : ModuleBase<SocketCommandContext>
+    public class MusicModule(MusicQueueService queue, VoiceStateService stateService, 
+        MusicPlayerService musicPlayer, FfmpegProcessManager processManager) : ModuleBase<SocketCommandContext>
     {
         private readonly MusicQueueService _queue = queue;
-        private readonly AudioStreamService _audioService = audioService;
         private readonly VoiceStateService _voiceState = stateService;
         private readonly MusicPlayerService _musicPlayer = musicPlayer;
         private readonly FfmpegProcessManager _processManager = processManager;
@@ -85,12 +84,12 @@ namespace DiscordApp.Modules
                     );
                 await _musicPlayer.PlaybackLoop(guildId, song);
             }
-            
+
 
             if (_queue.GetQueue(guildId).Count == 0)
             {
                 _voiceState.SetPlaying(guildId, false);
-                _voiceState.RemoveClient(guildId);                
+                _voiceState.RemoveClient(guildId);
                 await currentUserChannel.DisconnectAsync();
 
                 await ReplyAsync("", false, new EmbedBuilder()
@@ -131,12 +130,15 @@ namespace DiscordApp.Modules
             }
 
             _queue.GetQueue(Context.Guild.Id).Clear();
+
             _processManager.Kill(Context.Guild.Id);
             await ReplyAsync("", false, new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle($"Bye bye..")
                 .Build()
                 );
+            _voiceState.RemoveClient(Context.Guild.Id);
+            _voiceState.SetPlaying(Context.Guild.Id, false);
             await currentBotsChannel.DisconnectAsync();
         }
 

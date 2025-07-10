@@ -10,12 +10,13 @@ namespace DiscordApp.Services
             string Arguments = string.Empty;
             if (IsValidUrl(queryOrUrl) == false)
             {
-                Arguments = $"--encoding utf-8 --yes-playlist -f bestaudio --get-title --get-url ytsearch1:\"{queryOrUrl}\"";
+                Arguments = $"--encoding utf-8 --quiet --no-warnings -f bestaudio --get-title --get-url ytsearch1:\"{queryOrUrl}\"";
             }
             else
             {
-                Arguments = $"--encoding utf-8 --yes-playlist -f bestaudio --get-title -g \"{queryOrUrl}\"";
+               Arguments = $"--encoding utf-8 --quiet --no-warnings -f bestaudio --get-title --get-url \"{queryOrUrl}\"";
             }
+
             var psi = new ProcessStartInfo
             {
                 FileName = "yt-dlp",
