@@ -56,11 +56,11 @@ namespace DiscordApp.Modules
                         .Build());
                     return;
                 }
-            }
-
+            }            
+            
             if (_voiceState.GetClient(guildId) == null)
             {
-                var audioClient = await currentUserChannel.ConnectAsync(selfDeaf: true);
+                IAudioClient audioClient = await currentUserChannel.ConnectAsync(selfDeaf: true);
                 _voiceState.SetClient(guildId, audioClient);
             }
 
@@ -72,8 +72,12 @@ namespace DiscordApp.Modules
                     .WithDescription($"Song was added to queue.")
                     .Build()
                     );
-                return;
+               return;
             }
+
+
+
+
 
             while(_queue.TryGetNextSong(guildId, out var song))
             {

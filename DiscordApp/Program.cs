@@ -18,7 +18,7 @@ class Program
             .AddSingleton(_client)
             .AddSingleton<CommandHandler>()
             .AddSingleton<CommandService>()
-            .AddSingleton<AudioStreamService>()
+            .AddTransient<AudioStreamService>()
             .AddSingleton<MusicQueueService>()
             .AddSingleton <VoiceStateService>()
             .AddSingleton<MusicPlayerService>()

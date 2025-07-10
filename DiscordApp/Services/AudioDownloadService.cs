@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Threading.Tasks;
-using System;
 
 namespace DiscordApp.Services
 {
@@ -52,6 +47,7 @@ namespace DiscordApp.Services
 
             string title = output.Count > 0 ? output[0] : "Unknown title";
             string url = output.Count > 1 ? output[1] : "";
+            //Console.WriteLine($"{title} - {url}");
 
             return new Song(title, url);
         }

@@ -1,11 +1,4 @@
-﻿using Discord.Audio;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 
 namespace DiscordApp.Services
 {
@@ -30,8 +23,11 @@ namespace DiscordApp.Services
             {
                 return;
             }
+
             if (!_queues.ContainsKey(guildId))
+            {
                 _queues[guildId] = new Queue<Song>();
+            }
 
             _queues[guildId].Enqueue(song.Value);
             Console.WriteLine($"Size: {_queues[guildId].Count}");
@@ -40,8 +36,9 @@ namespace DiscordApp.Services
         public Queue<Song> GetQueue(ulong guildId)
         {
             if (!_queues.ContainsKey(guildId))
+            {
                 _queues[guildId] = new Queue<Song>();
-
+            }
             return _queues[guildId];
         }
 

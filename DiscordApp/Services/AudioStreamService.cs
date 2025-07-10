@@ -1,16 +1,10 @@
 ﻿using Discord.Audio;
-using FFMpegCore;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace DiscordApp.Services
 {
-    public class AudioStreamService
+    public class AudioStreamService : IDisposable
     {
         private Process? ffmpeg;
 
@@ -107,6 +101,13 @@ namespace DiscordApp.Services
                     Console.WriteLine($"[WARNING]Error by FlushAsync: {ex.Message}");
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            ffmpeg.Dispose();
+            ffmpeg.Kill();
+            ffmpeg = null;
         }
     }
 }
