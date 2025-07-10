@@ -4,10 +4,9 @@ using System.Diagnostics;
 
 namespace DiscordApp.Services
 {
-    public class AudioStreamService : IDisposable
+    public class AudioStreamService(FfmpegProcessManager processManager)
     {
-        private Process? ffmpeg;
-
+        private readonly FfmpegProcessManager _processManager = processManager;
         private Process CreateStream(Song? song)
         {
             if (song == null)
@@ -39,46 +38,10 @@ namespace DiscordApp.Services
             return process;
         }
 
-        public void KillFfmpeg()
-        {
-            if (ffmpeg == null)
-            {
-                Console.WriteLine("[INFO] ffmpeg is null.");
-                return;
-            }
-
-            try
-            {
-                ffmpeg.Refresh();
-                try
-                {
-                    ffmpeg.StandardOutput.BaseStream.Close();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[WARNING] Unable to close stdout: {ex.Message}");
-                }
-
-                if (!ffmpeg.HasExited)
-                {
-                    ffmpeg.Kill();
-                    Console.WriteLine("[INFO] ffmpeg was killed.");
-                    ffmpeg.WaitForExit(2000);
-                }
-
-                ffmpeg.Dispose();
-                ffmpeg = null;
-                Console.WriteLine("[INFO] ffmpeg was ended.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] Error while trying to kill ffmpeg: {ex.Message}");
-            }
-        }
-
         public async Task SendAsync(ulong guildId, IAudioClient client, Song? song)
         {
-            ffmpeg = CreateStream(song);
+            using var ffmpeg = CreateStream(song);
+            _processManager.Add(guildId, ffmpeg);
             using var output = ffmpeg.StandardOutput.BaseStream;
             using var discord = client.CreatePCMStream(AudioApplication.Mixed);
             try
@@ -88,13 +51,14 @@ namespace DiscordApp.Services
             catch
             {
                 Console.WriteLine("[ERROR]Copying stream to discord was cancelled");
-                //return;
+                return;
             }
             finally
             {
                 try
                 {
                     await discord.FlushAsync();
+                    _processManager.Kill(guildId);
                 }
                 catch (Exception ex)
                 {
@@ -103,11 +67,11 @@ namespace DiscordApp.Services
             }
         }
 
-        public void Dispose()
-        {
-            ffmpeg.Dispose();
-            ffmpeg.Kill();
-            ffmpeg = null;
-        }
+        //public void Dispose()
+        //{
+        //    ffmpeg.Dispose();
+        //    ffmpeg.Kill();
+        //    ffmpeg = null;
+        //}
     }
 }

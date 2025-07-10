@@ -18,10 +18,11 @@ class Program
             .AddSingleton(_client)
             .AddSingleton<CommandHandler>()
             .AddSingleton<CommandService>()
-            .AddTransient<AudioStreamService>()
             .AddSingleton<MusicQueueService>()
             .AddSingleton <VoiceStateService>()
             .AddSingleton<MusicPlayerService>()
+            .AddSingleton<FfmpegProcessManager>()
+            .AddTransient<AudioStreamService>()
             .BuildServiceProvider();
         
         var handler = services.GetRequiredService<CommandHandler>();

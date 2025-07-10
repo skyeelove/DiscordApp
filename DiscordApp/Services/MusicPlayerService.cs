@@ -8,29 +8,20 @@ using System.Threading.Tasks;
 
 namespace DiscordApp.Services
 {
-    public class MusicPlayerService
-    {
-        private readonly MusicQueueService _queue;
-        private readonly VoiceStateService _voiceState;
-        private readonly AudioStreamService _audioService;
-        public MusicPlayerService(
+    public class MusicPlayerService(
             MusicQueueService queue,
             VoiceStateService voiceState,
             AudioStreamService audioService)
-        {
-            _queue = queue;
-            _voiceState = voiceState;
-            _audioService = audioService;
-        }
-
+    {
+        private readonly MusicQueueService _queue = queue;
+        private readonly VoiceStateService _voiceState = voiceState;
+        private readonly AudioStreamService _audioService = audioService;
 
         public void Skip(ulong guildId)
         {
             _queue.RemoveCurrent(guildId);
             _voiceState.SetSkippedState(guildId, true);
-            _audioService.KillFfmpeg();
         }
-
 
         public async Task StopPlaying(ulong guildId)
         {

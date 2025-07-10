@@ -14,6 +14,11 @@ namespace DiscordApp.Services
 
         public void RemoveCurrent(ulong guildId)
         {
+            if(!_queues.ContainsKey(guildId) || _queues[guildId].Count == 0)
+            {
+                Console.WriteLine($"Queue for guild {guildId} is empty or does not exist.");
+                return;
+            }
             _queues[guildId].Dequeue();
         }
 

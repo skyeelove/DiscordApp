@@ -14,12 +14,13 @@ using System.Threading.Tasks;
 namespace DiscordApp.Modules
 {
     public class MusicModule(AudioStreamService audioService, MusicQueueService queue, 
-        VoiceStateService stateService, MusicPlayerService musicPlayer) : ModuleBase<SocketCommandContext>
+        VoiceStateService stateService, MusicPlayerService musicPlayer, FfmpegProcessManager processManager) : ModuleBase<SocketCommandContext>
     {
         private readonly MusicQueueService _queue = queue;
         private readonly AudioStreamService _audioService = audioService;
         private readonly VoiceStateService _voiceState = stateService;
         private readonly MusicPlayerService _musicPlayer = musicPlayer;
+        private readonly FfmpegProcessManager _processManager = processManager;
 
         private void VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel)
         {
@@ -40,7 +41,7 @@ namespace DiscordApp.Modules
             {
                 await ReplyAsync("", false, new EmbedBuilder()
                     .WithColor(Color.DarkRed)
-                    .WithDescription("You must be in a voice channel.")
+                    .WithTitle("You must be in a voice channel.")
                     .Build()
                     );
                 return;
@@ -52,7 +53,7 @@ namespace DiscordApp.Modules
                 {
                     await ReplyAsync("", false, new EmbedBuilder()
                         .WithColor(Color.DarkRed)
-                        .WithDescription($"Bot already in {currentBotsChannel.Name} you can try to use !stop")
+                        .WithTitle($"Bot already in {currentBotsChannel.Name} you can try to use !stop")
                         .Build());
                     return;
                 }
@@ -69,18 +70,19 @@ namespace DiscordApp.Modules
             {
                 await ReplyAsync("", false, new EmbedBuilder()
                     .WithColor(Color.Orange)
-                    .WithDescription($"Song was added to queue.")
+                    .WithTitle($"Song was added to queue.")
                     .Build()
                     );
                return;
             }
 
-
-
-
-
             while(_queue.TryGetNextSong(guildId, out var song))
             {
+                await ReplyAsync("", false, new EmbedBuilder()
+                    .WithColor(Color.Orange)
+                    .WithTitle($"Now playing: {song.Value.Title}")
+                    .Build()
+                    );
                 await _musicPlayer.PlaybackLoop(guildId, song);
             }
             
@@ -93,7 +95,7 @@ namespace DiscordApp.Modules
 
                 await ReplyAsync("", false, new EmbedBuilder()
                     .WithColor(Color.DarkRed)
-                    .WithDescription($"There are no more tracks")
+                    .WithTitle($"There are no more tracks")
                     .Build()
                     );
 
@@ -113,7 +115,7 @@ namespace DiscordApp.Modules
 
             await ReplyAsync("ㅤ", false,
                 embed
-                .WithColor(Color.DarkOrange)
+                .WithColor(Color.Orange)
                 .Build()
             );
         }
@@ -123,43 +125,16 @@ namespace DiscordApp.Modules
         public async Task StopMusic(IVoiceChannel? channel = null)
         {
             VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
-
-            if (currentUserChannel == null)
+            if (!await ValidateVoiceChannelAsync(currentBotsChannel, currentUserChannel))
             {
-                await ReplyAsync("", false, new EmbedBuilder()
-                    .WithColor(Color.DarkRed)
-                    .WithDescription("You must be in a voice channel.")
-                    .Build()
-                    );
-                return;
-            }
-
-            if (currentBotsChannel == null)
-            {
-                await ReplyAsync("", false, new EmbedBuilder()
-                    .WithColor(Color.DarkRed)
-                    .WithDescription("​I'm not in the voice room")
-                    .Build() 
-                    );
-
-                return;
-            }
-
-            if (currentBotsChannel.Id != currentUserChannel.Id)
-            {
-                await ReplyAsync("", false, new EmbedBuilder()
-                    .WithColor(Color.DarkRed)
-                    .WithDescription($"You should be in the same room as the bot")
-                    .Build()
-                    );
                 return;
             }
 
             _queue.GetQueue(Context.Guild.Id).Clear();
-            _audioService.KillFfmpeg();
+            _processManager.Kill(Context.Guild.Id);
             await ReplyAsync("", false, new EmbedBuilder()
                 .WithColor(Color.Orange)
-                .WithDescription($"Bye bye..")
+                .WithTitle($"Bye bye..")
                 .Build()
                 );
             await currentBotsChannel.DisconnectAsync();
@@ -168,12 +143,50 @@ namespace DiscordApp.Modules
         [Command("skip", RunMode = RunMode.Async)]
         public async Task SkipMusic()
         {
+            VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
+            if (!await ValidateVoiceChannelAsync(currentBotsChannel, currentUserChannel))
+            {
+                return;
+            }
             _musicPlayer.Skip(Context.Guild.Id);
+            _processManager.Kill(Context.Guild.Id);
             await ReplyAsync("", false, new EmbedBuilder()
                 .WithColor(Color.Orange)
-                .WithDescription($"Song was skipped")
+                .WithTitle($"Song was skipped")
                 .Build()
                 );
+        }
+
+        private async Task<bool> ValidateVoiceChannelAsync(SocketVoiceChannel? currentBotsChannel, IVoiceChannel? currentUserChannel)
+        {
+            if (currentUserChannel == null)
+            {
+                await ReplyAsync("", false, new EmbedBuilder()
+                    .WithColor(Color.DarkRed)
+                    .WithTitle("You must be in a voice channel.")
+                    .Build());
+                return false;
+            }
+
+            if (currentBotsChannel == null)
+            {
+                await ReplyAsync("", false, new EmbedBuilder()
+                    .WithColor(Color.DarkRed)
+                    .WithTitle("I'm not in the voice room")
+                    .Build());
+                return false;
+            }
+
+            if (currentBotsChannel.Id != currentUserChannel.Id)
+            {
+                await ReplyAsync("", false, new EmbedBuilder()
+                    .WithColor(Color.DarkRed)
+                    .WithTitle("You should be in the same room as the bot")
+                    .Build());
+                return false;
+            }
+
+            return true;
         }
     }
 }
