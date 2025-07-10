@@ -1,3 +1,3 @@
 Dependencies: 
 
-yt-dlp, ffmpeg, 
+Discord.Net, libsodium,   opus, Microsoft DI, yt-dlp, ffmpeg, 
