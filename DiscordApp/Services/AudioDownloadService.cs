@@ -19,7 +19,7 @@ namespace DiscordApp.Services
 
             var psi = new ProcessStartInfo
             {
-                FileName = "yt-dlp",
+                FileName = "tools/yt-dlp",
                 Arguments = Arguments,
                 RedirectStandardOutput = true,
                 UseShellExecute = false,

@@ -19,7 +19,7 @@ namespace DiscordApp.Modules
         private readonly MusicQueueService _queue = queue;
         private readonly VoiceStateService _voiceState = stateService;
         private readonly MusicPlayerService _musicPlayer = musicPlayer;
-        private readonly FfmpegProcessManager _processManager = processManager;
+        private readonly FfmpegProcessManager _ffmpegProcess = processManager;
 
         private void VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel)
         {
@@ -131,7 +131,7 @@ namespace DiscordApp.Modules
 
             _queue.GetQueue(Context.Guild.Id).Clear();
 
-            _processManager.Kill(Context.Guild.Id);
+            _ffmpegProcess.Kill(Context.Guild.Id);
             await ReplyAsync("", false, new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle($"Bye bye..")
@@ -151,7 +151,7 @@ namespace DiscordApp.Modules
                 return;
             }
             _musicPlayer.Skip(Context.Guild.Id);
-            _processManager.Kill(Context.Guild.Id);
+            _ffmpegProcess.Kill(Context.Guild.Id);
             await ReplyAsync("", false, new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle($"Song was skipped")
