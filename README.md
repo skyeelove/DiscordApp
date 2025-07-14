@@ -1,3 +1,3 @@
 Dependencies: 
 
-NuGet: Discord.Net, libsodium,   opus, Microsoft.Extensions.DependencyInjection, ytdlp-executable, FFMpegCore, 
+NuGet: Discord.Net, libsodium,   opus, Microsoft.Extensions.DependencyInjection, ytdlp-executable, FFMpegCore, SpotifyApi.Web
