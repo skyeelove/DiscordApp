@@ -64,7 +64,7 @@ namespace DiscordApp.Modules
                 _voiceState.SetClient(guildId, audioClient);
             }
 
-            Song? addSong = await AudioDownloadService.GetAudioDataAsync(input, AudioDownloadService.SearchMode.SoundCloud);
+            Song? addSong = await AudioDownloadService.GetAudioDataAsync(input, SearchMode.SoundCloud).ConfigureAwait(false);
             if(addSong == null)
             {
                 await ReplyAsync(embed: new EmbedBuilder()

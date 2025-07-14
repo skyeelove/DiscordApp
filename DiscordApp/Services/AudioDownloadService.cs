@@ -5,17 +5,17 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 
+public enum SearchMode
+{
+    YouTube,
+    SoundCloud,
+    Spotify,
+}
+
 namespace DiscordApp.Services
 {
     public static class AudioDownloadService
     {
-        public enum SearchMode
-        {
-            YouTube,
-            SoundCloud,
-            Spotify,
-        }
-
         public static async Task<Song?> GetAudioDataAsync(string queryOrUrl,SearchMode mode)
         {
             string title, url;
