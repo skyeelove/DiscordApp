@@ -30,19 +30,9 @@ class Program
 
         await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("token"));
         await _client.StartAsync();
-        _client.Ready += async () => await OnReady(_client);
+        _client.Ready += static async () => await Logger.Initialize();
 
         await Task.Delay(-1);
-    }
-
-    private static async Task OnReady(DiscordSocketClient client)
-    {
-        var logDir = Path.Combine("logs");
-        if (!Directory.Exists(logDir))
-        {
-            Directory.CreateDirectory(logDir!);
-        }
-        Logger.Info("Bot started life cycle.");
     }
 }
 

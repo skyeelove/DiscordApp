@@ -1,4 +1,6 @@
-﻿public static class Logger
+﻿using Discord.WebSocket;
+
+public static class Logger
 {
     private static readonly object _lock = new();
     private static readonly string _logFilePath = Path.Combine("logs", "app.log");
@@ -29,5 +31,15 @@
     public static void Debug(string message)
     {
         Log("[DEBUG]  " + message);
+    }
+
+    public static async Task Initialize()
+    {
+        var logDir = Path.Combine("logs");
+        if (!Directory.Exists(logDir))
+        {
+            Directory.CreateDirectory(logDir!);
+        }
+        Logger.Info("Bot started life cycle.");
     }
 }
