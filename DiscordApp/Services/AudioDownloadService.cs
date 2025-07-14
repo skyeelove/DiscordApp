@@ -1,19 +1,18 @@
 ﻿using SpotifyAPI.Web;
 using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
 using System.Text;
-using System.Text.Json;
 
-public enum SearchMode
-{
-    YouTube,
-    SoundCloud,
-    Spotify,
-}
+
 
 namespace DiscordApp.Services
 {
+    public enum SearchMode
+    {
+        YouTube,
+        SoundCloud,
+        Spotify,
+    }
+
     public static class AudioDownloadService
     {
         public static async Task<Song?> GetAudioDataAsync(string queryOrUrl,SearchMode mode)
