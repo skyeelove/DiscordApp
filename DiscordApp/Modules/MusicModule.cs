@@ -38,11 +38,11 @@ namespace DiscordApp.Modules
             var guildId = Context.Guild.Id; 
             if (currentUserChannel == null)
             {
-                await ReplyAsync("", false, new EmbedBuilder()
+                await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(Color.DarkRed)
                     .WithTitle("You must be in a voice channel.")
                     .Build()
-                    );
+                    ).ConfigureAwait(false);
                 return;
             }
 
@@ -50,39 +50,50 @@ namespace DiscordApp.Modules
             {
                 if (currentBotsChannel.Id != currentUserChannel.Id)
                 {
-                    await ReplyAsync("", false, new EmbedBuilder()
+                    await ReplyAsync(embed: new EmbedBuilder()
                         .WithColor(Color.DarkRed)
                         .WithTitle($"Bot already in {currentBotsChannel.Name} you can try to use !stop")
-                        .Build());
+                        .Build()).ConfigureAwait(false);
                     return;
                 }
             }            
             
             if (_voiceState.GetClient(guildId) == null)
             {
-                IAudioClient audioClient = await currentUserChannel.ConnectAsync(selfDeaf: true);
+                IAudioClient audioClient = await currentUserChannel.ConnectAsync(selfDeaf: true).ConfigureAwait(false);
                 _voiceState.SetClient(guildId, audioClient);
             }
 
-            _queue.AddSong(guildId, await AudioDownloadService.GetAudioDataAsync(input));
+            Song? addSong = await AudioDownloadService.GetAudioDataAsync(input, AudioDownloadService.SearchMode.SoundCloud);
+            if(addSong == null)
+            {
+                await ReplyAsync(embed: new EmbedBuilder()
+                    .WithColor(Color.Orange)
+                    .WithTitle($"Not found =(.")
+                    .Build()
+                    ).ConfigureAwait(false);
+                return;
+            }
+
+            _queue.AddSong(guildId, addSong);
             if (_voiceState.IsPlaying(guildId))
             {
-                await ReplyAsync("", false, new EmbedBuilder()
+                await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(Color.Orange)
                     .WithTitle($"Song was added to queue.")
                     .Build()
-                    );
+                    ).ConfigureAwait(false);
                return;
             }
 
             while(_queue.TryGetNextSong(guildId, out var song))
             {
-                await ReplyAsync("", false, new EmbedBuilder()
+                await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(Color.Orange)
                     .WithTitle($"Now playing: {song.Value.Title}")
                     .Build()
-                    );
-                await _musicPlayer.PlaybackLoop(guildId, song);
+                    ).ConfigureAwait(false);
+                await _musicPlayer.PlaybackLoop(guildId, song).ConfigureAwait(false);
             }
 
 
@@ -90,13 +101,13 @@ namespace DiscordApp.Modules
             {
                 _voiceState.SetPlaying(guildId, false);
                 _voiceState.RemoveClient(guildId);
-                await currentUserChannel.DisconnectAsync();
+                await currentUserChannel.DisconnectAsync().ConfigureAwait(false);
 
-                await ReplyAsync("", false, new EmbedBuilder()
+                await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(Color.DarkRed)
                     .WithTitle($"There are no more tracks")
                     .Build()
-                    );
+                    ).ConfigureAwait(false);
 
             }
         }
@@ -116,7 +127,7 @@ namespace DiscordApp.Modules
                 embed
                 .WithColor(Color.Orange)
                 .Build()
-            );
+            ).ConfigureAwait(false);
         }
 
 
@@ -124,7 +135,7 @@ namespace DiscordApp.Modules
         public async Task StopMusic(IVoiceChannel? channel = null)
         {
             VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
-            if (!await ValidateVoiceChannelAsync(currentBotsChannel, currentUserChannel))
+            if (!await ValidateVoiceChannelAsync(currentBotsChannel, currentUserChannel).ConfigureAwait(false))
             {
                 return;
             }
@@ -132,59 +143,59 @@ namespace DiscordApp.Modules
             _queue.GetQueue(Context.Guild.Id).Clear();
 
             _ffmpegProcess.Kill(Context.Guild.Id);
-            await ReplyAsync("", false, new EmbedBuilder()
+            await ReplyAsync(embed: new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle($"Bye bye..")
                 .Build()
-                );
+                ).ConfigureAwait(false);
             _voiceState.RemoveClient(Context.Guild.Id);
             _voiceState.SetPlaying(Context.Guild.Id, false);
-            await currentBotsChannel.DisconnectAsync();
+            await currentBotsChannel.DisconnectAsync().ConfigureAwait(false);
         }
 
         [Command("skip", RunMode = RunMode.Async)]
         public async Task SkipMusic()
         {
             VoiceContext(out SocketVoiceChannel? currentBotsChannel, out IVoiceChannel? currentUserChannel);
-            if (!await ValidateVoiceChannelAsync(currentBotsChannel, currentUserChannel))
+            if (!await ValidateVoiceChannelAsync(currentBotsChannel, currentUserChannel).ConfigureAwait(false))
             {
                 return;
             }
             _musicPlayer.Skip(Context.Guild.Id);
             _ffmpegProcess.Kill(Context.Guild.Id);
-            await ReplyAsync("", false, new EmbedBuilder()
+            await ReplyAsync(embed: new EmbedBuilder()
                 .WithColor(Color.Orange)
                 .WithTitle($"Song was skipped")
                 .Build()
-                );
+                ).ConfigureAwait(false);
         }
 
         private async Task<bool> ValidateVoiceChannelAsync(SocketVoiceChannel? currentBotsChannel, IVoiceChannel? currentUserChannel)
         {
             if (currentUserChannel == null)
             {
-                await ReplyAsync("", false, new EmbedBuilder()
+                await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(Color.DarkRed)
                     .WithTitle("You must be in a voice channel.")
-                    .Build());
+                    .Build()).ConfigureAwait(false);
                 return false;
             }
 
             if (currentBotsChannel == null)
             {
-                await ReplyAsync("", false, new EmbedBuilder()
+                await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(Color.DarkRed)
                     .WithTitle("I'm not in the voice room")
-                    .Build());
+                    .Build()).ConfigureAwait(false);
                 return false;
             }
 
             if (currentBotsChannel.Id != currentUserChannel.Id)
             {
-                await ReplyAsync("", false, new EmbedBuilder()
+                await ReplyAsync(embed: new EmbedBuilder()
                     .WithColor(Color.DarkRed)
                     .WithTitle("You should be in the same room as the bot")
-                    .Build());
+                    .Build()).ConfigureAwait(false);
                 return false;
             }
 
