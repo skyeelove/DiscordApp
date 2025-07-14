@@ -19,20 +19,30 @@ class Program
             .AddSingleton<CommandHandler>()
             .AddSingleton<CommandService>()
             .AddSingleton<MusicQueueService>()
-            .AddSingleton <VoiceStateService>()
+            .AddSingleton<VoiceStateService>()
             .AddSingleton<MusicPlayerService>()
             .AddSingleton<FfmpegProcessManager>()
             .AddTransient<AudioStreamService>()
             .BuildServiceProvider();
-        
+
         var handler = services.GetRequiredService<CommandHandler>();
         await handler.InstallCommandsAsync();
 
-        var token = Environment.GetEnvironmentVariable("token");
-        await _client.LoginAsync(TokenType.Bot, token);
+        await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("token"));
         await _client.StartAsync();
+        _client.Ready += async () => await OnReady(_client);
 
         await Task.Delay(-1);
+    }
+
+    private static async Task OnReady(DiscordSocketClient client)
+    {
+        var logDir = Path.Combine("logs");
+        if (!Directory.Exists(logDir))
+        {
+            Directory.CreateDirectory(logDir!);
+        }
+        Logger.Info("Bot started life cycle.");
     }
 }
 

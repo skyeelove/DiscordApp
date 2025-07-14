@@ -16,7 +16,7 @@ namespace DiscordApp.Services
         {
             if (!_queues.ContainsKey(guildId) || _queues[guildId].Count == 0)
             {
-                Console.WriteLine($"Queue for guild {guildId} is empty or does not exist.");
+                Logger.Error($"Queue for guild {guildId} is empty or does not exist.");
                 return;
             }
             _queues[guildId].Dequeue();
@@ -35,7 +35,7 @@ namespace DiscordApp.Services
             }
 
             _queues[guildId].Enqueue(song.Value);
-            Console.WriteLine($"Size: {_queues[guildId].Count}");
+            Logger.Info($"Added song '{song.Value.Title}' to queue for guild {guildId}.");
         }
 
         public Queue<Song> GetQueue(ulong guildId)
@@ -59,9 +59,11 @@ namespace DiscordApp.Services
                 song = queue.Peek();
                 return true;
             }
-
-            song = null;
-            return false;
+            else
+            {
+                song = null;
+                return false;
+            }
         }
 
         public List<string> GetAllTitles(ulong guildId)
@@ -78,6 +80,7 @@ namespace DiscordApp.Services
                     return result;
                 }
             }
+            Logger.Warning($"No songs found in queue for guild {guildId}.");
             return ["No Elements in queue"];
         }
     }

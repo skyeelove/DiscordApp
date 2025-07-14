@@ -24,14 +24,6 @@ namespace DiscordApp.Services
             };
 
             var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-
-            process.ErrorDataReceived += (sender, e) =>
-            {
-                if (!string.IsNullOrWhiteSpace(e.Data))
-                {
-                    Console.WriteLine("[FFMPEG] " + e.Data);
-                }
-            };
             process.Start();
             process.BeginErrorReadLine();
 
@@ -44,13 +36,14 @@ namespace DiscordApp.Services
             _processManager.Add(guildId, ffmpeg);
             using var output = ffmpeg.StandardOutput.BaseStream;
             using var discord = client.CreatePCMStream(AudioApplication.Mixed);
+            Logger.Debug("ffmpeg started playing music");
             try
             {
                 await output.CopyToAsync(discord);
             }
             catch
             {
-                Console.WriteLine("[ERROR]Copying stream to discord was cancelled");
+                Logger.Error("Copying stream to discord was cancelled");
                 ffmpeg.Kill();
             }
             finally
@@ -59,19 +52,13 @@ namespace DiscordApp.Services
                 {
                     await discord.FlushAsync();
                     _processManager.Kill(guildId);
+                    Logger.Debug("ffmpeg ended playing music");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[WARNING]Error by FlushAsync: {ex.Message}");
+                    Logger.Error($"Error by FlushAsync: {ex.Message}");
                 }
             }
         }
-
-        //public void Dispose()
-        //{
-        //    ffmpeg.Dispose();
-        //    ffmpeg.Kill();
-        //    ffmpeg = null;
-        //}
     }
 }

@@ -23,11 +23,6 @@ namespace DiscordApp.Services
             _voiceState.SetSkippedState(guildId, true);
         }
 
-        public async Task StopPlaying(ulong guildId)
-        {
-            //
-        }
-
         public async Task PlaybackLoop(ulong guildId, Song? song)
         {
             if (song == null)

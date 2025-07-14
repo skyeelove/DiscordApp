@@ -86,6 +86,7 @@ namespace DiscordApp.Services
 
             title = output.Count > 0 ? output[0] : "Unknown title";
             url = output.Count > 1 ? output[1] : "";
+            Logger.Debug($"yt-dlp request result: Title: {title}, URL: {url}");
             return new Song(title, url);
         }
 

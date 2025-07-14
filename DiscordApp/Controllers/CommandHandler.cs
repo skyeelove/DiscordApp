@@ -40,23 +40,19 @@ public class CommandHandler
 
     private async Task HandleCommandAsync(SocketMessage messageParam)
     {
-        Console.WriteLine($"Received raw message type: {messageParam.GetType()}");
-
         var message = messageParam as SocketUserMessage;
         if (message == null || message.Author.IsBot)
         {
-            Console.WriteLine("Message is null or from bot.");
             return;
         }
-
-        Console.WriteLine($"Received message: \"{message.Content}\" from {message.Author.Username}");
 
         int argPos = 0;
         if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
         {
-            Console.WriteLine("No valid prefix.");
             return;
         }
+
+        Logger.Info($"Received message from {message.Author.Username}: \"{message.Content}\"");
 
         var context = new SocketCommandContext(_client, message);
 
@@ -64,7 +60,7 @@ public class CommandHandler
 
         if (!result.IsSuccess)
         {
-            Console.WriteLine($"Command error: {result.ErrorReason}");
+            Logger.Error($"Command execution failed: {result.ErrorReason}");
             await context.Channel.SendMessageAsync($"Error: {result.ErrorReason}");
         }
     }
