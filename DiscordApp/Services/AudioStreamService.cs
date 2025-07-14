@@ -16,7 +16,11 @@ namespace DiscordApp.Services
             var psi = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-hide_banner -loglevel info -nostdin -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i \"{song.Value.Link}\" -ac 2 -f s16le -ar 48000 pipe:1",
+                Arguments = $"-hide_banner -allowed_extensions ALL -extension_picky 0 " +
+                  "-protocol_whitelist file,http,https,tcp,tls,crypto " +
+                  "-user_agent \"Mozilla/5.0\" " +
+                  $"-i \"{song.Value.Link}\" -ac 2 -ar 48000 -f s16le pipe:1",
+
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
